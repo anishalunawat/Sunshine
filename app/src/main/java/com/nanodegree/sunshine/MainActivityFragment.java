@@ -1,8 +1,11 @@
 package com.nanodegree.sunshine;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.format.Time;
 import android.util.Log;
@@ -15,7 +18,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -61,12 +63,26 @@ public class MainActivityFragment extends Fragment {
         int id = item.getItemId();
         //noinspection SimplifiableIfStatement
         if (id == R.id.refresh) {
-            FetchWeatherTask weatherTask = new FetchWeatherTask("Bangalore,India");
-            weatherTask.execute();
+
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void updateWeather() {
+        FetchWeatherTask weatherTask = new FetchWeatherTask();
+        //weatherTask.execute("Bangalore");
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = pref.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+        String temperature = pref.getString(getString(R.string.pref_temperature_key), getString(R.string.pref_temperature_default));
+        weatherTask.execute(location, temperature);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
     }
 
     @Override
@@ -75,19 +91,8 @@ public class MainActivityFragment extends Fragment {
         // create view to attach adapter to it this can be returned directly if their is nothing to show
         View rootview = inflater.inflate(R.layout.fragment_main, container, false);
 
-        //Dummy data to be shown lin listview
-
-        ArrayList<String> data = new ArrayList<>();
-        data.add("Mon 6/23 - Sunny - 31/17");
-        data.add("Tue 6/24 - Foggy - 21/8");
-        data.add("Wed 6/25 - Cloudy - 22/17");
-        data.add("Thurs 6/26 - Rainy - 18/11");
-        data.add("Fri 6/27 - Foggy - 21/10");
-        data.add("Sat 6/28 - TRAPPED IN WEATHERSTATION - 23/18");
-
-
         //Adapter is a reference given to form listview
-        adapter = new ArrayAdapter<>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, data);
+        adapter = new ArrayAdapter<>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, new ArrayList<String>());
 
         //rever listview resource element
         ListView listView = (ListView) rootview.findViewById(R.id.listview_forecast);
@@ -96,7 +101,11 @@ public class MainActivityFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String forecast = adapter.getItem(position);
-                Toast.makeText(getActivity(), forecast, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getActivity(), forecast, Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getActivity(), Detailactivity.class);
+                intent.putExtra("data", forecast);
+                startActivity(intent);
+
             }
         });
 
@@ -106,11 +115,7 @@ public class MainActivityFragment extends Fragment {
 
     class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
         private final String TAG = MainActivityFragment.class.getSimpleName();
-        private String data = null;
 
-        public FetchWeatherTask(String s) {
-            data = s;
-        }
 
         /* The date/time conversion code is going to be moved outside the asynctask later,
          * so for convenience we're breaking it out into its own method now.
@@ -216,9 +221,9 @@ public class MainActivityFragment extends Fragment {
             try {
                 String baseUrl = "http://api.openweathermap.org/data/2.5/forecast/daily?";
                 Uri builder = Uri.parse(baseUrl).buildUpon()
-                        .appendQueryParameter("q", data)
+                        .appendQueryParameter("q", params[0])
                         .appendQueryParameter("mode", format)
-                        .appendQueryParameter("units", unit)
+                        .appendQueryParameter("units", params[1])
                         .appendQueryParameter("cnt", Integer.toString(numDays))
                         .appendQueryParameter("appid", appid).build();
                 URL url = new URL(builder.toString());

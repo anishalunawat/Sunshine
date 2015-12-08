@@ -19,8 +19,20 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".DetailActivity"
-            android:label="@string/title_activity_detail">
+            android:name=".Detailactivity"
+            android:label="@string/title_activity_detailactivity"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.nanodegree.sunshine.MainActivity" />
+        </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.nanodegree.sunshine.MainActivity" />
         </activity>
     </application>
 
